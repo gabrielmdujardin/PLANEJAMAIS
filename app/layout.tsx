@@ -16,7 +16,7 @@ export const metadata: Metadata = {
   title: "Planeja+ | Organize seus eventos com facilidade",
   description: "Plataforma para organização de eventos colaborativos, festas, casamentos e viagens.",
   manifest: "/manifest.json",
-    generator: 'v0.dev'
+    generator: 'v0.app'
 }
 
 export default function RootLayout({
