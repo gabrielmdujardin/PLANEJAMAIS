@@ -1,377 +1,148 @@
 "use client"
 
-import type React from "react"
-
-import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
+import { useState } from "react"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Switch } from "@/components/ui/switch"
-import { Separator } from "@/components/ui/separator"
-import { useToast } from "@/hooks/use-toast"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { useAuth } from "@/context/auth-context"
-import { Loader2, User, Bell, Shield, LogOut } from "lucide-react"
-import ImageUpload from "@/components/image-upload"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog"
+import { useToast } from "@/hooks/use-toast"
+import { User, Mail, Phone, MapPin, Save } from "lucide-react"
+import { BackButton } from "@/components/back-button"
 
 export default function ProfilePage() {
-  const { user, logout, isLoading: authLoading, updateUserProfile } = useAuth()
-  const router = useRouter()
+  const { user, updateUser } = useAuth()
   const { toast } = useToast()
-  const [isLoading, setIsLoading] = useState(false)
-  const [name, setName] = useState("")
-  const [email, setEmail] = useState("")
-  const [currentPassword, setCurrentPassword] = useState("")
-  const [newPassword, setNewPassword] = useState("")
-  const [confirmPassword, setConfirmPassword] = useState("")
-  const [isPhotoDialogOpen, setIsPhotoDialogOpen] = useState(false)
-  const [profilePhoto, setProfilePhoto] = useState<string>("")
 
-  // Notificações
-  const [emailNotifications, setEmailNotifications] = useState(true)
-  const [pushNotifications, setPushNotifications] = useState(true)
-  const [eventReminders, setEventReminders] = useState(true)
-  const [guestUpdates, setGuestUpdates] = useState(true)
+  const [name, setName] = useState(user?.name || "")
+  const [email, setEmail] = useState(user?.email || "")
+  const [phone, setPhone] = useState(user?.phone || "")
+  const [location, setLocation] = useState(user?.location || "")
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
-  useEffect(() => {
-    if (!authLoading && !user) {
-      router.push("/login")
-      return
-    }
+  const handleSave = async () => {
+    setIsSubmitting(true)
 
-    if (user) {
-      setName(user.name || "")
-      setEmail(user.email || "")
-      setProfilePhoto(user.profilePhoto || "")
-    }
-  }, [user, authLoading, router])
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 1000))
 
-  const handleUpdateProfile = (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
-
-    // Simulando atualização de perfil
-    setTimeout(() => {
-      if (updateUserProfile) {
-        updateUserProfile({
-          name,
-          email,
-          profilePhoto,
-        })
-      }
-
-      toast({
-        title: "Perfil atualizado",
-        description: "Suas informações foram atualizadas com sucesso.",
+      updateUser({
+        name,
+        email,
+        phone,
+        location,
       })
-      setIsLoading(false)
-    }, 1000)
-  }
 
-  const handleUpdatePassword = (e: React.FormEvent) => {
-    e.preventDefault()
-
-    if (newPassword !== confirmPassword) {
       toast({
-        title: "Erro ao atualizar senha",
-        description: "As senhas não coincidem.",
+        title: "Perfil atualizado!",
+        description: "Suas informações foram salvas com sucesso.",
+      })
+    } catch (error) {
+      toast({
+        title: "Erro ao atualizar",
+        description: "Ocorreu um erro ao salvar suas informações.",
         variant: "destructive",
       })
-      return
-    }
-
-    setIsLoading(true)
-
-    // Simulando atualização de senha
-    setTimeout(() => {
-      toast({
-        title: "Senha atualizada",
-        description: "Sua senha foi atualizada com sucesso.",
-      })
-      setCurrentPassword("")
-      setNewPassword("")
-      setConfirmPassword("")
-      setIsLoading(false)
-    }, 1000)
-  }
-
-  const handleUpdateNotifications = (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
-
-    // Simulando atualização de notificações
-    setTimeout(() => {
-      toast({
-        title: "Preferências atualizadas",
-        description: "Suas preferências de notificação foram atualizadas.",
-      })
-      setIsLoading(false)
-    }, 1000)
-  }
-
-  const handleProfilePhotoChange = (imageData: string) => {
-    setProfilePhoto(imageData)
-    setIsPhotoDialogOpen(false)
-
-    // Atualizar o perfil com a nova foto
-    if (updateUserProfile) {
-      updateUserProfile({
-        ...user,
-        profilePhoto: imageData,
-      })
-
-      toast({
-        title: "Foto atualizada",
-        description: "Sua foto de perfil foi atualizada com sucesso.",
-      })
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
-  if (authLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-[calc(100vh-4rem)]">
-        <Loader2 className="h-8 w-8 animate-spin text-emerald-600" />
-      </div>
-    )
-  }
+  const initials = name
+    .split(" ")
+    .map((word) => word[0])
+    .join("")
+    .toUpperCase()
+    .substring(0, 2)
 
   return (
-    <div className="container max-w-4xl py-10">
-      <div className="flex flex-col md:flex-row gap-8 mb-8">
-        <div className="flex flex-col items-center">
-          <Avatar className="h-32 w-32 mb-4">
-            {profilePhoto ? (
-              <AvatarImage src={profilePhoto || "/placeholder.svg"} alt={name} />
-            ) : (
-              <AvatarFallback className="text-3xl bg-emerald-100 text-emerald-800">
-                {name
-                  .split(" ")
-                  .map((n) => n[0])
-                  .join("")
-                  .toUpperCase()
-                  .substring(0, 2)}
-              </AvatarFallback>
-            )}
-          </Avatar>
-          <Dialog open={isPhotoDialogOpen} onOpenChange={setIsPhotoDialogOpen}>
-            <DialogTrigger asChild>
-              <Button variant="outline" size="sm">
-                Alterar foto
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Alterar foto de perfil</DialogTitle>
-                <DialogDescription>Faça upload de uma nova foto para seu perfil.</DialogDescription>
-              </DialogHeader>
-              <div className="py-4">
-                <ImageUpload onImageSelect={handleProfilePhotoChange} currentImage={profilePhoto} />
-              </div>
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setIsPhotoDialogOpen(false)}>
-                  Cancelar
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-        </div>
-        <div className="flex-1">
-          <h1 className="text-3xl font-bold mb-2">{name || "Seu perfil"}</h1>
-          <p className="text-gray-600 mb-4">{email || "seu@email.com"}</p>
-          <div className="flex flex-wrap gap-2">
-            <Button variant="outline" size="sm" className="gap-2" onClick={logout}>
-              <LogOut className="h-4 w-4" /> Sair da conta
-            </Button>
-          </div>
+    <div className="container mx-auto py-8 px-4 max-w-2xl">
+      <div className="mb-6 flex items-center gap-4">
+        <BackButton />
+        <div>
+          <h1 className="text-3xl font-bold">Meu Perfil</h1>
+          <p className="text-gray-600 dark:text-gray-400">Gerencie suas informações pessoais</p>
         </div>
       </div>
 
-      <Tabs defaultValue="profile" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="profile" className="flex items-center gap-2">
-            <User className="h-4 w-4" />
-            <span className="hidden sm:inline">Perfil</span>
-          </TabsTrigger>
-          <TabsTrigger value="notifications" className="flex items-center gap-2">
-            <Bell className="h-4 w-4" />
-            <span className="hidden sm:inline">Notificações</span>
-          </TabsTrigger>
-          <TabsTrigger value="security" className="flex items-center gap-2">
-            <Shield className="h-4 w-4" />
-            <span className="hidden sm:inline">Segurança</span>
-          </TabsTrigger>
-        </TabsList>
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-4">
+            <Avatar className="h-20 w-20">
+              <AvatarFallback className="bg-emerald-100 text-emerald-800 text-2xl">{initials}</AvatarFallback>
+            </Avatar>
+            <div>
+              <CardTitle>{name || "Usuário"}</CardTitle>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Membro desde {new Date().toLocaleDateString()}</p>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="space-y-2">
+            <Label htmlFor="name">Nome Completo</Label>
+            <div className="relative">
+              <User className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
+              <Input
+                id="name"
+                placeholder="Seu nome"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+          </div>
 
-        <TabsContent value="profile">
-          <Card>
-            <CardHeader>
-              <CardTitle>Informações pessoais</CardTitle>
-              <CardDescription>Atualize suas informações de perfil.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleUpdateProfile} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="name">Nome completo</Label>
-                  <Input id="name" value={name} onChange={(e) => setName(e.target.value)} />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="phone">Telefone</Label>
-                  <Input id="phone" type="tel" placeholder="(00) 00000-0000" />
-                </div>
-              </form>
-            </CardContent>
-            <CardFooter className="flex justify-between">
-              <Button variant="outline">Cancelar</Button>
-              <Button
-                onClick={handleUpdateProfile}
-                disabled={isLoading}
-                className="bg-emerald-600 hover:bg-emerald-700"
-              >
-                {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                Salvar alterações
-              </Button>
-            </CardFooter>
-          </Card>
-        </TabsContent>
+          <div className="space-y-2">
+            <Label htmlFor="email">E-mail</Label>
+            <div className="relative">
+              <Mail className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
+              <Input
+                id="email"
+                type="email"
+                placeholder="seu@email.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+          </div>
 
-        <TabsContent value="notifications">
-          <Card>
-            <CardHeader>
-              <CardTitle>Preferências de notificação</CardTitle>
-              <CardDescription>Escolha como deseja receber notificações.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <form onSubmit={handleUpdateNotifications}>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between space-x-2">
-                    <Label htmlFor="email-notifications" className="flex flex-col space-y-1">
-                      <span>Notificações por email</span>
-                      <span className="font-normal text-sm text-muted-foreground">
-                        Receba atualizações sobre seus eventos por email
-                      </span>
-                    </Label>
-                    <Switch
-                      id="email-notifications"
-                      checked={emailNotifications}
-                      onCheckedChange={setEmailNotifications}
-                    />
-                  </div>
-                  <div className="flex items-center justify-between space-x-2">
-                    <Label htmlFor="push-notifications" className="flex flex-col space-y-1">
-                      <span>Notificações push</span>
-                      <span className="font-normal text-sm text-muted-foreground">
-                        Receba notificações no seu dispositivo
-                      </span>
-                    </Label>
-                    <Switch
-                      id="push-notifications"
-                      checked={pushNotifications}
-                      onCheckedChange={setPushNotifications}
-                    />
-                  </div>
-                  <Separator />
-                  <div className="flex items-center justify-between space-x-2">
-                    <Label htmlFor="event-reminders" className="flex flex-col space-y-1">
-                      <span>Lembretes de eventos</span>
-                      <span className="font-normal text-sm text-muted-foreground">
-                        Receba lembretes antes dos seus eventos
-                      </span>
-                    </Label>
-                    <Switch id="event-reminders" checked={eventReminders} onCheckedChange={setEventReminders} />
-                  </div>
-                  <div className="flex items-center justify-between space-x-2">
-                    <Label htmlFor="guest-updates" className="flex flex-col space-y-1">
-                      <span>Atualizações de convidados</span>
-                      <span className="font-normal text-sm text-muted-foreground">
-                        Seja notificado quando convidados confirmarem presença
-                      </span>
-                    </Label>
-                    <Switch id="guest-updates" checked={guestUpdates} onCheckedChange={setGuestUpdates} />
-                  </div>
-                </div>
-              </form>
-            </CardContent>
-            <CardFooter className="flex justify-between">
-              <Button variant="outline">Restaurar padrões</Button>
-              <Button
-                onClick={handleUpdateNotifications}
-                disabled={isLoading}
-                className="bg-emerald-600 hover:bg-emerald-700"
-              >
-                {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                Salvar preferências
-              </Button>
-            </CardFooter>
-          </Card>
-        </TabsContent>
+          <div className="space-y-2">
+            <Label htmlFor="phone">Telefone</Label>
+            <div className="relative">
+              <Phone className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
+              <Input
+                id="phone"
+                type="tel"
+                placeholder="(00) 00000-0000"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+          </div>
 
-        <TabsContent value="security">
-          <Card>
-            <CardHeader>
-              <CardTitle>Segurança da conta</CardTitle>
-              <CardDescription>Altere sua senha e gerencie a segurança da sua conta.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <form onSubmit={handleUpdatePassword} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="current-password">Senha atual</Label>
-                  <Input
-                    id="current-password"
-                    type="password"
-                    value={currentPassword}
-                    onChange={(e) => setCurrentPassword(e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="new-password">Nova senha</Label>
-                  <Input
-                    id="new-password"
-                    type="password"
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="confirm-password">Confirmar nova senha</Label>
-                  <Input
-                    id="confirm-password"
-                    type="password"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                  />
-                </div>
-              </form>
-            </CardContent>
-            <CardFooter className="flex justify-between">
-              <Button variant="outline">Cancelar</Button>
-              <Button
-                onClick={handleUpdatePassword}
-                disabled={isLoading}
-                className="bg-emerald-600 hover:bg-emerald-700"
-              >
-                {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                Atualizar senha
-              </Button>
-            </CardFooter>
-          </Card>
-        </TabsContent>
-      </Tabs>
+          <div className="space-y-2">
+            <Label htmlFor="location">Localização</Label>
+            <div className="relative">
+              <MapPin className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
+              <Input
+                id="location"
+                placeholder="Cidade, Estado"
+                value={location}
+                onChange={(e) => setLocation(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+          </div>
+
+          <Button onClick={handleSave} disabled={isSubmitting} className="w-full bg-emerald-600 hover:bg-emerald-700">
+            <Save className="mr-2 h-4 w-4" />
+            {isSubmitting ? "Salvando..." : "Salvar Alterações"}
+          </Button>
+        </CardContent>
+      </Card>
     </div>
   )
 }

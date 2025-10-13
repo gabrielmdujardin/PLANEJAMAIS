@@ -1,5 +1,7 @@
 "use client"
 
+import type React from "react"
+
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -14,6 +16,7 @@ import {
 } from "@/components/ui/dialog"
 import { useToast } from "@/hooks/use-toast"
 import { useEventStore } from "@/stores/event-store"
+import { useContactStore } from "@/stores/contact-store"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
 import { isValidEmail, isValidPhone, formatPhone } from "@/lib/validation"
@@ -21,50 +24,6 @@ import { Loader2, Mail, MessageSquare, Search, UserPlus, Check } from "lucide-re
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Checkbox } from "@/components/ui/checkbox"
 import { ScrollArea } from "@/components/ui/scroll-area"
-
-// Simulação de uma store de contatos
-// Em um app real, isso viria de um contexto ou store global
-const useContactsStore = () => {
-  const [contacts, setContacts] = useState([
-    {
-      id: "1",
-      name: "João Silva",
-      email: "joao@example.com",
-      phone: "(11) 98765-4321",
-      isFavorite: true,
-    },
-    {
-      id: "2",
-      name: "Maria Oliveira",
-      email: "maria@example.com",
-      phone: "(11) 91234-5678",
-      isFavorite: true,
-    },
-    {
-      id: "3",
-      name: "Pedro Santos",
-      email: "pedro@example.com",
-      phone: "(11) 99876-5432",
-      isFavorite: false,
-    },
-    {
-      id: "4",
-      name: "Ana Costa",
-      email: "ana@example.com",
-      phone: "(11) 95555-4444",
-      isFavorite: false,
-    },
-    {
-      id: "5",
-      name: "Lucas Ferreira",
-      email: "lucas@example.com",
-      phone: "(11) 93333-2222",
-      isFavorite: false,
-    },
-  ])
-
-  return { contacts }
-}
 
 interface AddGuestDialogProps {
   open: boolean
@@ -85,22 +44,16 @@ export default function AddGuestDialog({ open, onOpenChange, eventId }: AddGuest
 
   const { toast } = useToast()
   const { addGuests, getEventById } = useEventStore()
-  const { contacts } = useContactsStore()
+  const { contacts, searchContacts } = useContactStore()
   const event = getEventById(eventId)
 
   // Filtrar contatos com base na pesquisa
-  const filteredContacts = contacts.filter(
-    (contact) =>
-      contact.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      contact.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      contact.phone.includes(searchQuery),
-  )
+  const filteredContacts = searchQuery ? searchContacts(searchQuery) : contacts
 
   // Verificar se um contato já está no evento
   const isContactInEvent = (contactId: string) => {
     if (!event || !event.guests) return false
-    const contactEmail = contacts.find((c) => c.id === contactId)?.email
-    return event.guests.some((guest) => guest.email === contactEmail)
+    return event.guests.some((guest) => guest.contactId === contactId)
   }
 
   const validateIndividualGuest = () => {
@@ -179,7 +132,7 @@ export default function AddGuestDialog({ open, onOpenChange, eventId }: AddGuest
         name: guestName.trim(),
         email: guestEmail.trim(),
         phone: formatPhone(guestPhone.trim()),
-        status: "pending",
+        status: "pending" as const,
       }
 
       addGuests(eventId, [newGuest])
@@ -231,7 +184,7 @@ export default function AddGuestDialog({ open, onOpenChange, eventId }: AddGuest
         name: guest.name,
         email: guest.email,
         phone: formatPhone(guest.phone),
-        status: "pending",
+        status: "pending" as const,
       }))
 
       addGuests(eventId, newGuests)
@@ -280,7 +233,8 @@ export default function AddGuestDialog({ open, onOpenChange, eventId }: AddGuest
           name: contact.name,
           email: contact.email,
           phone: contact.phone,
-          status: "pending",
+          status: "pending" as const,
+          contactId: contact.id,
         }))
 
       if (contactsToAdd.length === 0) {
@@ -318,7 +272,7 @@ export default function AddGuestDialog({ open, onOpenChange, eventId }: AddGuest
     }
   }
 
-  const sendInvites = async (guests) => {
+  const sendInvites = async (guests: any[]) => {
     if (!event) return
 
     setIsSendingInvites(true)
@@ -339,7 +293,7 @@ export default function AddGuestDialog({ open, onOpenChange, eventId }: AddGuest
   }
 
   // Formatar telefone enquanto digita
-  const handlePhoneChange = (e) => {
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value
     // Permitir apenas números, parênteses, espaços e hífen
     const cleaned = value.replace(/[^\d\s()-]/g, "")

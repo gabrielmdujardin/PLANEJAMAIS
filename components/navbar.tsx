@@ -11,7 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Menu, X, User, LogOut, Calendar, Users, Home } from "lucide-react"
+import { Menu, X, User, LogOut, Calendar, Users, Home, BarChart3 } from "lucide-react"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { AccessibilityMenu } from "@/components/accessibility-menu"
 import { Logo } from "@/components/logo"
@@ -24,14 +24,12 @@ export default function Navbar() {
   const { user, logout } = useAuth()
   const pathname = usePathname()
 
-  // Verificar se estamos na página inicial
   const isHomePage = pathname === "/"
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen)
   }
 
-  // Detectar scroll para mudar o estilo da navbar
   useEffect(() => {
     const handleScroll = () => {
       if (window.scrollY > 10) {
@@ -60,23 +58,37 @@ export default function Navbar() {
     >
       <div className="container mx-auto px-4">
         <div className="flex justify-between items-center h-16">
-          {/* Logo */}
           <Logo size="md" animated={false} />
 
-          {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-4">
             {user ? (
               <>
                 <Link
                   href="/dashboard"
-                  className="text-gray-600 dark:text-gray-300 hover:text-emerald-600 dark:hover:text-emerald-400 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+                  className="text-gray-600 dark:text-gray-300 hover:text-emerald-600 dark:hover:text-emerald-400 px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-2"
                 >
+                  <Home className="h-4 w-4" />
                   Dashboard
                 </Link>
                 <Link
-                  href="/contacts"
-                  className="text-gray-600 dark:text-gray-300 hover:text-emerald-600 dark:hover:text-emerald-400 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+                  href="/calendar"
+                  className="text-gray-600 dark:text-gray-300 hover:text-emerald-600 dark:hover:text-emerald-400 px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-2"
                 >
+                  <Calendar className="h-4 w-4" />
+                  Calendário
+                </Link>
+                <Link
+                  href="/dashboard/visualization"
+                  className="text-gray-600 dark:text-gray-300 hover:text-emerald-600 dark:hover:text-emerald-400 px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-2"
+                >
+                  <BarChart3 className="h-4 w-4" />
+                  Análise
+                </Link>
+                <Link
+                  href="/contacts"
+                  className="text-gray-600 dark:text-gray-300 hover:text-emerald-600 dark:hover:text-emerald-400 px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-2"
+                >
+                  <Users className="h-4 w-4" />
                   Contatos
                 </Link>
                 <DropdownMenu>
@@ -136,7 +148,6 @@ export default function Navbar() {
             </div>
           </div>
 
-          {/* Mobile menu button */}
           <div className="md:hidden flex items-center gap-2">
             <ThemeToggle />
             <AccessibilityMenu />
@@ -147,7 +158,6 @@ export default function Navbar() {
         </div>
       </div>
 
-      {/* Mobile Navigation */}
       <AnimatePresence>
         {isMenuOpen && (
           <motion.div
@@ -167,6 +177,22 @@ export default function Navbar() {
                   >
                     <Home className="h-5 w-5 mr-2" />
                     Dashboard
+                  </Link>
+                  <Link
+                    href="/calendar"
+                    className="flex items-center text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-emerald-600 dark:hover:text-emerald-400 px-3 py-2 rounded-md text-base font-medium transition-colors"
+                    onClick={toggleMenu}
+                  >
+                    <Calendar className="h-5 w-5 mr-2" />
+                    Calendário
+                  </Link>
+                  <Link
+                    href="/dashboard/visualization"
+                    className="flex items-center text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-emerald-600 dark:hover:text-emerald-400 px-3 py-2 rounded-md text-base font-medium transition-colors"
+                    onClick={toggleMenu}
+                  >
+                    <BarChart3 className="h-5 w-5 mr-2" />
+                    Análise
                   </Link>
                   <Link
                     href="/contacts"
@@ -209,7 +235,6 @@ export default function Navbar() {
                     className="flex items-center text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-emerald-600 dark:hover:text-emerald-400 px-3 py-2 rounded-md text-base font-medium transition-colors"
                     onClick={toggleMenu}
                   >
-                    <Calendar className="h-5 w-5 mr-2" />
                     Preços
                   </Link>
                   <Link

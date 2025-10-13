@@ -1,0 +1,20 @@
+{
+  "crons": [
+    {
+      "path": "/api/jobs/daily-aggregate",
+      "schedule": "0 2 * * *"
+    },
+    {
+      "path": "/api/jobs/pending-invites",
+      "schedule": "0 9,15 * * *"
+    },
+    {
+      "path": "/api/jobs/calendar-sync",
+      "schedule": "0 1 * * *"
+    },
+    {
+      "path": "/api/jobs/cleanup",
+      "schedule": "0 3 * * 0"
+    }
+  ]
+}

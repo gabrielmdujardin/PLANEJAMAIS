@@ -16,19 +16,30 @@ interface Item {
   image?: string | null
 }
 
-// Atualizar a interface Guest para incluir o campo phone
 interface Guest {
   id: string
   name: string
   email: string
   phone: string
   status: "confirmed" | "pending" | "declined"
+  contactId?: string
+}
+
+interface EventPhoto {
+  id: string
+  url: string
+  filename: string
+  uploadedBy: string
+  uploadedAt: string
+  description?: string
+  tags?: string[]
 }
 
 interface Event {
   id: string
   title: string
   type: string
+  category?: string
   date: string
   time: string
   fullDate?: string
@@ -38,6 +49,9 @@ interface Event {
   totalGuests: number
   items: Item[]
   guests: Guest[]
+  photos: EventPhoto[]
+  createdAt: string
+  updatedAt: string
 }
 
 interface EventStore {
@@ -56,6 +70,12 @@ interface EventStore {
   addGuests: (eventId: string, guests: Guest[]) => void
   updateGuest: (eventId: string, guestId: string, guest: Guest) => void
   removeGuest: (eventId: string, guestId: string) => void
+  updateGuestStatus: (eventId: string, guestId: string, status: "confirmed" | "pending" | "declined") => void
+
+  // Fotos
+  addPhoto: (eventId: string, photo: Omit<EventPhoto, "id" | "uploadedAt">) => void
+  removePhoto: (eventId: string, photoId: string) => void
+  updatePhoto: (eventId: string, photoId: string, updates: Partial<EventPhoto>) => void
 }
 
 export const useEventStore = create<EventStore>()(
@@ -66,6 +86,7 @@ export const useEventStore = create<EventStore>()(
           id: "1",
           title: "Churrasco na Casa do João",
           type: "Colaborativo",
+          category: "Aniversário",
           date: "Sábado, 15 de Junho",
           time: "16:00",
           fullDate: "15/06/2024",
@@ -111,13 +132,21 @@ export const useEventStore = create<EventStore>()(
             },
           ],
           guests: [
-            { id: "1", name: "João Silva", status: "confirmed", email: "joao@example.com", phone: "(11) 98765-4321" },
+            {
+              id: "1",
+              name: "João Silva",
+              status: "confirmed",
+              email: "joao@example.com",
+              phone: "(11) 98765-4321",
+              contactId: "contact_1",
+            },
             {
               id: "2",
               name: "Maria Oliveira",
               status: "confirmed",
               email: "maria@example.com",
               phone: "(11) 91234-5678",
+              contactId: "contact_2",
             },
             {
               id: "3",
@@ -125,21 +154,53 @@ export const useEventStore = create<EventStore>()(
               status: "confirmed",
               email: "pedro@example.com",
               phone: "(11) 99876-5432",
+              contactId: "contact_3",
             },
-            { id: "4", name: "Ana Costa", status: "pending", email: "ana@example.com", phone: "(11) 95555-4444" },
+            {
+              id: "4",
+              name: "Ana Costa",
+              status: "pending",
+              email: "ana@example.com",
+              phone: "(11) 95555-4444",
+              contactId: "contact_4",
+            },
             {
               id: "5",
               name: "Lucas Ferreira",
               status: "declined",
               email: "lucas@example.com",
               phone: "(11) 93333-2222",
+              contactId: "contact_5",
             },
           ],
+          photos: [
+            {
+              id: "photo_1",
+              url: "/placeholder.svg?height=300&width=400&text=Churrasco+1",
+              filename: "churrasco_1.jpg",
+              uploadedBy: "João Silva",
+              uploadedAt: "2024-06-15T18:30:00Z",
+              description: "Início do churrasco",
+              tags: ["churrasco", "amigos"],
+            },
+            {
+              id: "photo_2",
+              url: "/placeholder.svg?height=300&width=400&text=Churrasco+2",
+              filename: "churrasco_2.jpg",
+              uploadedBy: "Maria Oliveira",
+              uploadedAt: "2024-06-15T19:15:00Z",
+              description: "Galera reunida",
+              tags: ["grupo", "diversão"],
+            },
+          ],
+          createdAt: "2024-06-10T10:00:00Z",
+          updatedAt: "2024-06-15T20:00:00Z",
         },
         {
           id: "2",
           title: "Aniversário da Maria",
           type: "Festa",
+          category: "Festa de Aniversário",
           date: "Domingo, 23 de Junho",
           time: "14:00",
           fullDate: "23/06/2024",
@@ -149,16 +210,34 @@ export const useEventStore = create<EventStore>()(
           totalGuests: 20,
           items: [],
           guests: [
-            { id: "1", name: "João Silva", status: "confirmed", email: "joao@example.com", phone: "(11) 98765-4321" },
+            {
+              id: "1",
+              name: "João Silva",
+              status: "confirmed",
+              email: "joao@example.com",
+              phone: "(11) 98765-4321",
+              contactId: "contact_1",
+            },
             {
               id: "2",
               name: "Pedro Santos",
               status: "confirmed",
               email: "pedro@example.com",
               phone: "(11) 99876-5432",
+              contactId: "contact_3",
             },
-            { id: "3", name: "Ana Costa", status: "pending", email: "ana@example.com", phone: "(11) 95555-4444" },
+            {
+              id: "3",
+              name: "Ana Costa",
+              status: "pending",
+              email: "ana@example.com",
+              phone: "(11) 95555-4444",
+              contactId: "contact_4",
+            },
           ],
+          photos: [],
+          createdAt: "2024-06-18T14:00:00Z",
+          updatedAt: "2024-06-18T14:00:00Z",
         },
       ],
 
@@ -169,7 +248,9 @@ export const useEventStore = create<EventStore>()(
 
       updateEvent: (id, updatedEvent) =>
         set((state) => ({
-          events: state.events.map((event) => (event.id === id ? { ...event, ...updatedEvent } : event)),
+          events: state.events.map((event) =>
+            event.id === id ? { ...event, ...updatedEvent, updatedAt: new Date().toISOString() } : event,
+          ),
         })),
 
       removeEvent: (id) =>
@@ -189,6 +270,7 @@ export const useEventStore = create<EventStore>()(
               ? {
                   ...event,
                   items: [...(event.items || []), item],
+                  updatedAt: new Date().toISOString(),
                 }
               : event,
           ),
@@ -201,6 +283,7 @@ export const useEventStore = create<EventStore>()(
               ? {
                   ...event,
                   items: event.items.map((item) => (item.id === itemId ? updatedItem : item)),
+                  updatedAt: new Date().toISOString(),
                 }
               : event,
           ),
@@ -213,6 +296,7 @@ export const useEventStore = create<EventStore>()(
               ? {
                   ...event,
                   items: event.items.filter((item) => item.id !== itemId),
+                  updatedAt: new Date().toISOString(),
                 }
               : event,
           ),
@@ -231,6 +315,7 @@ export const useEventStore = create<EventStore>()(
                     ...event,
                     guests: [...(event.guests || []), ...newGuests],
                     totalGuests: (event.totalGuests || 0) + newGuests.length,
+                    updatedAt: new Date().toISOString(),
                   }
                 : event,
             ),
@@ -242,7 +327,6 @@ export const useEventStore = create<EventStore>()(
           const event = state.events.find((e) => e.id === eventId)
           if (!event) return state
 
-          // Verificar se o status mudou para atualizar o contador de confirmados
           const oldGuest = event.guests.find((g) => g.id === guestId)
           let confirmedDelta = 0
 
@@ -261,18 +345,28 @@ export const useEventStore = create<EventStore>()(
                     ...event,
                     guests: event.guests.map((guest) => (guest.id === guestId ? updatedGuest : guest)),
                     confirmedGuests: event.confirmedGuests + confirmedDelta,
+                    updatedAt: new Date().toISOString(),
                   }
                 : event,
             ),
           }
         }),
 
+      updateGuestStatus: (eventId, guestId, status) => {
+        const { updateGuest, getEventById } = get()
+        const event = getEventById(eventId)
+        const guest = event?.guests.find((g) => g.id === guestId)
+
+        if (guest) {
+          updateGuest(eventId, guestId, { ...guest, status })
+        }
+      },
+
       removeGuest: (eventId, guestId) =>
         set((state) => {
           const event = state.events.find((e) => e.id === eventId)
           if (!event) return state
 
-          // Verificar se o convidado estava confirmado
           const guest = event.guests.find((g) => g.id === guestId)
           const confirmedDelta = guest && guest.status === "confirmed" ? -1 : 0
 
@@ -284,11 +378,62 @@ export const useEventStore = create<EventStore>()(
                     guests: event.guests.filter((guest) => guest.id !== guestId),
                     totalGuests: event.totalGuests - 1,
                     confirmedGuests: event.confirmedGuests + confirmedDelta,
+                    updatedAt: new Date().toISOString(),
                   }
                 : event,
             ),
           }
         }),
+
+      // Fotos
+      addPhoto: (eventId, photoData) =>
+        set((state) => {
+          const newPhoto: EventPhoto = {
+            ...photoData,
+            id: `photo_${Date.now()}`,
+            uploadedAt: new Date().toISOString(),
+          }
+
+          return {
+            events: state.events.map((event) =>
+              event.id === eventId
+                ? {
+                    ...event,
+                    photos: [...(event.photos || []), newPhoto],
+                    updatedAt: new Date().toISOString(),
+                  }
+                : event,
+            ),
+          }
+        }),
+
+      removePhoto: (eventId, photoId) =>
+        set((state) => ({
+          events: state.events.map((event) =>
+            event.id === eventId
+              ? {
+                  ...event,
+                  photos: (event.photos || []).filter((photo) => photo.id !== photoId),
+                  updatedAt: new Date().toISOString(),
+                }
+              : event,
+          ),
+        })),
+
+      updatePhoto: (eventId, photoId, updates) =>
+        set((state) => ({
+          events: state.events.map((event) =>
+            event.id === eventId
+              ? {
+                  ...event,
+                  photos: (event.photos || []).map((photo) =>
+                    photo.id === photoId ? { ...photo, ...updates } : photo,
+                  ),
+                  updatedAt: new Date().toISOString(),
+                }
+              : event,
+          ),
+        })),
     }),
     {
       name: "event-storage",
