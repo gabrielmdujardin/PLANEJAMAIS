@@ -9,8 +9,9 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import { useAuth } from "@/context/auth-context"
-import { Loader2 } from "lucide-react"
+import { Loader2, Info } from "lucide-react"
 
 export default function LoginPage() {
   const [email, setEmail] = useState("")
@@ -35,6 +36,11 @@ export default function LoginPage() {
     }
   }
 
+  const fillDemoCredentials = () => {
+    setEmail("usuario@exemplo.com")
+    setPassword("123456")
+  }
+
   return (
     <div className="container flex items-center justify-center min-h-[calc(100vh-4rem)] py-8">
       <Card className="w-full max-w-md">
@@ -43,6 +49,17 @@ export default function LoginPage() {
           <CardDescription className="text-center">Entre com seu e-mail e senha para acessar sua conta</CardDescription>
         </CardHeader>
         <CardContent>
+          <Alert className="mb-4 bg-blue-50 border-blue-200">
+            <Info className="h-4 w-4 text-blue-600" />
+            <AlertDescription className="text-sm text-blue-800">
+              <strong>Modo Demo:</strong> Use qualquer email e senha para entrar.{" "}
+              <button type="button" onClick={fillDemoCredentials} className="underline font-medium hover:text-blue-900">
+                Clique aqui
+              </button>{" "}
+              para preencher automaticamente.
+            </AlertDescription>
+          </Alert>
+
           <form onSubmit={handleSubmit} className="space-y-4">
             {error && <div className="p-3 text-sm bg-red-50 text-red-600 rounded-md">{error}</div>}
             <div className="space-y-2">
@@ -66,6 +83,7 @@ export default function LoginPage() {
               <Input
                 id="password"
                 type="password"
+                placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
@@ -87,10 +105,10 @@ export default function LoginPage() {
           </div>
 
           <div className="grid grid-cols-2 gap-4 mt-4">
-            <Button variant="outline" className="w-full">
+            <Button variant="outline" className="w-full bg-transparent" type="button">
               Google
             </Button>
-            <Button variant="outline" className="w-full">
+            <Button variant="outline" className="w-full bg-transparent" type="button">
               Facebook
             </Button>
           </div>
