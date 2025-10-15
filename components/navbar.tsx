@@ -11,12 +11,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Menu, X, User, LogOut, Calendar, Users, Home, BarChart3 } from "lucide-react"
+import { Menu, X, User, LogOut, Calendar, Users, BarChart3 } from "lucide-react"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { AccessibilityMenu } from "@/components/accessibility-menu"
 import { Logo } from "@/components/logo"
 import { motion, AnimatePresence } from "framer-motion"
 import { usePathname } from "next/navigation"
+import { cn } from "@/lib/utils"
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
@@ -45,6 +46,14 @@ export default function Navbar() {
     }
   }, [])
 
+  const links = [
+    { href: "/dashboard", label: "Dashboard", icon: BarChart3 },
+    { href: "/calendar", label: "Calendário", icon: Calendar },
+    { href: "/contacts", label: "Contatos", icon: Users },
+    { href: "/dashboard/analytics", label: "Análise", icon: BarChart3 },
+    { href: "/profile", label: "Perfil", icon: User },
+  ]
+
   return (
     <nav
       className={`sticky top-0 z-50 transition-all duration-300 ${
@@ -63,34 +72,22 @@ export default function Navbar() {
           <div className="hidden md:flex items-center space-x-4">
             {user ? (
               <>
-                <Link
-                  href="/dashboard"
-                  className="text-gray-600 dark:text-gray-300 hover:text-emerald-600 dark:hover:text-emerald-400 px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-2"
-                >
-                  <Home className="h-4 w-4" />
-                  Dashboard
-                </Link>
-                <Link
-                  href="/calendar"
-                  className="text-gray-600 dark:text-gray-300 hover:text-emerald-600 dark:hover:text-emerald-400 px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-2"
-                >
-                  <Calendar className="h-4 w-4" />
-                  Calendário
-                </Link>
-                <Link
-                  href="/dashboard/visualization"
-                  className="text-gray-600 dark:text-gray-300 hover:text-emerald-600 dark:hover:text-emerald-400 px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-2"
-                >
-                  <BarChart3 className="h-4 w-4" />
-                  Análise
-                </Link>
-                <Link
-                  href="/contacts"
-                  className="text-gray-600 dark:text-gray-300 hover:text-emerald-600 dark:hover:text-emerald-400 px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-2"
-                >
-                  <Users className="h-4 w-4" />
-                  Contatos
-                </Link>
+                {links.slice(0, 4).map((link) => {
+                  const Icon = link.icon
+                  return (
+                    <Link
+                      key={link.href}
+                      href={link.href}
+                      className={cn(
+                        "text-gray-600 dark:text-gray-300 hover:text-emerald-600 dark:hover:text-emerald-400 px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-2",
+                        pathname === link.href ? "text-primary" : "",
+                      )}
+                    >
+                      <Icon className="h-4 w-4" />
+                      {link.label}
+                    </Link>
+                  )
+                })}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" size="sm" className="gap-2">
@@ -99,14 +96,19 @@ export default function Navbar() {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuItem asChild>
-                      <Link href="/profile" className="cursor-pointer">
-                        <User className="mr-2 h-4 w-4" />
-                        <span>Perfil</span>
-                      </Link>
-                    </DropdownMenuItem>
+                    {links.slice(4).map((link) => {
+                      const Icon = link.icon
+                      return (
+                        <DropdownMenuItem asChild key={link.href}>
+                          <Link href={link.href} className="cursor-pointer flex items-center gap-2">
+                            <Icon className="mr-2 h-4 w-4" />
+                            <span>{link.label}</span>
+                          </Link>
+                        </DropdownMenuItem>
+                      )
+                    })}
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={logout} className="text-red-600 cursor-pointer">
+                    <DropdownMenuItem onClick={logout} className="text-red-600 cursor-pointer flex items-center gap-2">
                       <LogOut className="mr-2 h-4 w-4" />
                       <span>Sair</span>
                     </DropdownMenuItem>
@@ -115,18 +117,22 @@ export default function Navbar() {
               </>
             ) : (
               <>
-                <Link
-                  href="/about"
-                  className="text-gray-600 dark:text-gray-300 hover:text-emerald-600 dark:hover:text-emerald-400 px-3 py-2 rounded-md text-sm font-medium transition-colors"
-                >
-                  Sobre
-                </Link>
-                <Link
-                  href="/pricing"
-                  className="text-gray-600 dark:text-gray-300 hover:text-emerald-600 dark:hover:text-emerald-400 px-3 py-2 rounded-md text-sm font-medium transition-colors"
-                >
-                  Preços
-                </Link>
+                {links.slice(0, 2).map((link) => {
+                  const Icon = link.icon
+                  return (
+                    <Link
+                      key={link.href}
+                      href={link.href}
+                      className={cn(
+                        "text-gray-600 dark:text-gray-300 hover:text-emerald-600 dark:hover:text-emerald-400 px-3 py-2 rounded-md text-sm font-medium transition-colors",
+                        pathname === link.href ? "text-primary" : "",
+                      )}
+                    >
+                      <Icon className="h-4 w-4" />
+                      {link.label}
+                    </Link>
+                  )
+                })}
                 <Link href="/login">
                   <Button variant="outline" size="sm">
                     Entrar
@@ -170,46 +176,23 @@ export default function Navbar() {
             <div className="container mx-auto px-4 space-y-1">
               {user ? (
                 <>
-                  <Link
-                    href="/dashboard"
-                    className="flex items-center text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-emerald-600 dark:hover:text-emerald-400 px-3 py-2 rounded-md text-base font-medium transition-colors"
-                    onClick={toggleMenu}
-                  >
-                    <Home className="h-5 w-5 mr-2" />
-                    Dashboard
-                  </Link>
-                  <Link
-                    href="/calendar"
-                    className="flex items-center text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-emerald-600 dark:hover:text-emerald-400 px-3 py-2 rounded-md text-base font-medium transition-colors"
-                    onClick={toggleMenu}
-                  >
-                    <Calendar className="h-5 w-5 mr-2" />
-                    Calendário
-                  </Link>
-                  <Link
-                    href="/dashboard/visualization"
-                    className="flex items-center text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-emerald-600 dark:hover:text-emerald-400 px-3 py-2 rounded-md text-base font-medium transition-colors"
-                    onClick={toggleMenu}
-                  >
-                    <BarChart3 className="h-5 w-5 mr-2" />
-                    Análise
-                  </Link>
-                  <Link
-                    href="/contacts"
-                    className="flex items-center text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-emerald-600 dark:hover:text-emerald-400 px-3 py-2 rounded-md text-base font-medium transition-colors"
-                    onClick={toggleMenu}
-                  >
-                    <Users className="h-5 w-5 mr-2" />
-                    Contatos
-                  </Link>
-                  <Link
-                    href="/profile"
-                    className="flex items-center text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-emerald-600 dark:hover:text-emerald-400 px-3 py-2 rounded-md text-base font-medium transition-colors"
-                    onClick={toggleMenu}
-                  >
-                    <User className="h-5 w-5 mr-2" />
-                    Perfil
-                  </Link>
+                  {links.map((link) => {
+                    const Icon = link.icon
+                    return (
+                      <Link
+                        key={link.href}
+                        href={link.href}
+                        className={cn(
+                          "flex items-center text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-emerald-600 dark:hover:text-emerald-400 px-3 py-2 rounded-md text-base font-medium transition-colors",
+                          pathname === link.href ? "text-primary" : "",
+                        )}
+                        onClick={toggleMenu}
+                      >
+                        <Icon className="h-5 w-5 mr-2" />
+                        {link.label}
+                      </Link>
+                    )
+                  })}
                   <button
                     onClick={() => {
                       logout()
@@ -223,20 +206,23 @@ export default function Navbar() {
                 </>
               ) : (
                 <>
-                  <Link
-                    href="/about"
-                    className="flex items-center text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-emerald-600 dark:hover:text-emerald-400 px-3 py-2 rounded-md text-base font-medium transition-colors"
-                    onClick={toggleMenu}
-                  >
-                    Sobre
-                  </Link>
-                  <Link
-                    href="/pricing"
-                    className="flex items-center text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-emerald-600 dark:hover:text-emerald-400 px-3 py-2 rounded-md text-base font-medium transition-colors"
-                    onClick={toggleMenu}
-                  >
-                    Preços
-                  </Link>
+                  {links.slice(0, 2).map((link) => {
+                    const Icon = link.icon
+                    return (
+                      <Link
+                        key={link.href}
+                        href={link.href}
+                        className={cn(
+                          "flex items-center text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-emerald-600 dark:hover:text-emerald-400 px-3 py-2 rounded-md text-base font-medium transition-colors",
+                          pathname === link.href ? "text-primary" : "",
+                        )}
+                        onClick={toggleMenu}
+                      >
+                        <Icon className="h-5 w-5 mr-2" />
+                        {link.label}
+                      </Link>
+                    )
+                  })}
                   <Link
                     href="/login"
                     className="flex items-center text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-emerald-600 dark:hover:text-emerald-400 px-3 py-2 rounded-md text-base font-medium transition-colors"
