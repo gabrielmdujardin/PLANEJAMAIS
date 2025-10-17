@@ -8,9 +8,9 @@ export function BackButton() {
   const router = useRouter()
 
   return (
-    <Button variant="ghost" size="sm" onClick={() => router.back()}>
-      <ArrowLeft className="h-4 w-4 mr-2" />
-      Voltar
+    <Button variant="ghost" size="icon" onClick={() => router.back()} className="h-8 w-8">
+      <ArrowLeft className="h-4 w-4" />
+      <span className="sr-only">Voltar</span>
     </Button>
   )
 }
