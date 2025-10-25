@@ -1,28 +1,18 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import { Calendar, Users, TrendingUp, DollarSign, Filter, X } from "lucide-react"
-import {
-  BarChart,
-  Bar,
-  PieChart,
-  Pie,
-  Cell,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-} from "recharts"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
 import { useEventStore } from "@/stores/event-store"
 import { BackButton } from "@/components/back-button"
+import { BarChartWrapper, PieChartWrapper } from "@/components/charts"
+import { getEvents } from "@/app/actions/events"
+import { useToast } from "@/hooks/use-toast"
 
 const COLORS = ["#10b981", "#3b82f6", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899"]
 
@@ -30,8 +20,48 @@ export default function VisualizationPage() {
   const [selectedTypes, setSelectedTypes] = useState<string[]>(["Festa", "Colaborativo"])
   const [selectedCategories, setSelectedCategories] = useState<string[]>([])
   const [showFilters, setShowFilters] = useState(false)
+  const [activeTab, setActiveTab] = useState("geral")
+  const [isLoading, setIsLoading] = useState(true)
 
-  const { events } = useEventStore()
+  const { events, setEvents } = useEventStore()
+  const { toast } = useToast()
+
+  useEffect(() => {
+    const loadEvents = async () => {
+      console.log("[v0] Loading events from database...")
+      setIsLoading(true)
+      try {
+        const { data, error } = await getEvents()
+
+        if (error) {
+          console.error("[v0] Error loading events:", error)
+          toast({
+            title: "Erro ao carregar eventos",
+            description: error,
+            variant: "destructive",
+          })
+        } else {
+          console.log("[v0] Events loaded:", data.length)
+          setEvents(data)
+          toast({
+            title: "Eventos carregados",
+            description: `${data.length} eventos encontrados`,
+          })
+        }
+      } catch (error) {
+        console.error("[v0] Exception loading events:", error)
+        toast({
+          title: "Erro ao carregar eventos",
+          description: "Ocorreu um erro inesperado",
+          variant: "destructive",
+        })
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    loadEvents()
+  }, [setEvents, toast])
 
   // Extrair categorias únicas dos eventos
   const allCategories = useMemo(() => {
@@ -160,6 +190,29 @@ export default function VisualizationPage() {
     setSelectedCategories(allCategories)
   }
 
+  if (isLoading) {
+    return (
+      <div className="container mx-auto py-8 px-4">
+        <div className="mb-6 flex items-center gap-4">
+          <BackButton />
+          <div>
+            <h1 className="text-3xl font-bold">Análise de Dados</h1>
+            <p className="text-gray-600 dark:text-gray-400">Carregando eventos...</p>
+          </div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {[1, 2, 3, 4].map((i) => (
+            <Card key={i} className="animate-pulse">
+              <CardContent className="p-6">
+                <div className="h-20 bg-gray-200 dark:bg-gray-700 rounded"></div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="container mx-auto py-8 px-4">
       <div className="mb-6 flex items-center justify-between">
@@ -176,7 +229,6 @@ export default function VisualizationPage() {
         </Button>
       </div>
 
-      {/* Filtros */}
       {showFilters && (
         <Card className="mb-6">
           <CardHeader className="flex flex-row items-center justify-between space-y-0">
@@ -247,7 +299,6 @@ export default function VisualizationPage() {
         </Card>
       ) : (
         <>
-          {/* Cards de Estatísticas */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -294,8 +345,7 @@ export default function VisualizationPage() {
             </Card>
           </div>
 
-          {/* Tabs de Visualização */}
-          <Tabs defaultValue="geral" className="space-y-6">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
             <TabsList>
               <TabsTrigger value="geral">Visão Geral</TabsTrigger>
               <TabsTrigger value="tendencias">Tendências</TabsTrigger>
@@ -313,26 +363,7 @@ export default function VisualizationPage() {
                     </p>
                   </CardHeader>
                   <CardContent>
-                    <ResponsiveContainer width="100%" height={300}>
-                      <PieChart>
-                        <Pie
-                          data={eventsByStatus}
-                          cx="50%"
-                          cy="50%"
-                          labelLine={false}
-                          label={(entry) => `${entry.name}: ${entry.percentage}%`}
-                          outerRadius={80}
-                          fill="#8884d8"
-                          dataKey="value"
-                        >
-                          {eventsByStatus.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                          ))}
-                        </Pie>
-                        <Tooltip />
-                        <Legend />
-                      </PieChart>
-                    </ResponsiveContainer>
+                    {activeTab === "geral" && <PieChartWrapper data={eventsByStatus} colors={COLORS} height={320} />}
                   </CardContent>
                 </Card>
 
@@ -342,16 +373,7 @@ export default function VisualizationPage() {
                     <p className="text-sm text-gray-600 dark:text-gray-400">Categorização dos eventos</p>
                   </CardHeader>
                   <CardContent>
-                    <ResponsiveContainer width="100%" height={300}>
-                      <BarChart data={eventsByType}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="name" />
-                        <YAxis />
-                        <Tooltip />
-                        <Legend />
-                        <Bar dataKey="value" fill="#10b981" name="Quantidade" />
-                      </BarChart>
-                    </ResponsiveContainer>
+                    {activeTab === "geral" && <BarChartWrapper data={eventsByType} colors={["#10b981"]} height={320} />}
                   </CardContent>
                 </Card>
               </div>
@@ -364,17 +386,16 @@ export default function VisualizationPage() {
                   <p className="text-sm text-gray-600 dark:text-gray-400">Comparação de total vs confirmados</p>
                 </CardHeader>
                 <CardContent>
-                  <ResponsiveContainer width="100%" height={400}>
-                    <BarChart data={guestsByEvent}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="name" />
-                      <YAxis />
-                      <Tooltip />
-                      <Legend />
-                      <Bar dataKey="total" fill="#3b82f6" name="Total" />
-                      <Bar dataKey="confirmados" fill="#10b981" name="Confirmados" />
-                    </BarChart>
-                  </ResponsiveContainer>
+                  {activeTab === "tendencias" && (
+                    <BarChartWrapper
+                      data={guestsByEvent}
+                      dataKeys={[
+                        { key: "total", name: "Total", color: "#3b82f6" },
+                        { key: "confirmados", name: "Confirmados", color: "#10b981" },
+                      ]}
+                      height={400}
+                    />
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>
@@ -386,16 +407,9 @@ export default function VisualizationPage() {
                   <p className="text-sm text-gray-600 dark:text-gray-400">Suas categorias personalizadas</p>
                 </CardHeader>
                 <CardContent>
-                  <ResponsiveContainer width="100%" height={400}>
-                    <BarChart data={eventsByCategory}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="name" />
-                      <YAxis />
-                      <Tooltip />
-                      <Legend />
-                      <Bar dataKey="value" fill="#10b981" name="Eventos" />
-                    </BarChart>
-                  </ResponsiveContainer>
+                  {activeTab === "distribuicao" && (
+                    <BarChartWrapper data={eventsByCategory} colors={["#10b981"]} height={400} />
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>

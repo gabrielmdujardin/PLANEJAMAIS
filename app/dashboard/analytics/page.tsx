@@ -29,6 +29,9 @@ const COLORS = ["#8b5cf6", "#ec4899", "#06b6d4", "#10b981", "#f59e0b", "#ef4444"
 export default function AnalyticsPage() {
   const { events } = useEventStore()
 
+  console.log("[v0] Total events loaded:", events.length)
+  console.log("[v0] Events data:", events)
+
   // Calcular métricas gerais
   const metrics = useMemo(() => {
     const totalEvents = events.length
@@ -43,6 +46,14 @@ export default function AnalyticsPage() {
       0,
     )
     const confirmationRate = totalGuests > 0 ? (confirmedGuests / totalGuests) * 100 : 0
+
+    console.log("[v0] Metrics calculated:", {
+      totalEvents,
+      totalGuests,
+      totalRevenue,
+      confirmationRate,
+      confirmedGuests,
+    })
 
     return {
       totalEvents,
@@ -77,7 +88,7 @@ export default function AnalyticsPage() {
       }
     })
 
-    return Object.entries(monthData)
+    const result = Object.entries(monthData)
       .map(([month, data]) => ({
         mes: month,
         eventos: data.eventos,
@@ -88,6 +99,10 @@ export default function AnalyticsPage() {
         const dateB = new Date(b.mes)
         return dateA.getTime() - dateB.getTime()
       })
+
+    console.log("[v0] Events by month data:", result)
+
+    return result
   }, [events])
 
   // Processar dados para gráfico de eventos por tipo
@@ -99,10 +114,14 @@ export default function AnalyticsPage() {
       typeData[type] = (typeData[type] || 0) + 1
     })
 
-    return Object.entries(typeData).map(([tipo, quantidade]) => ({
+    const result = Object.entries(typeData).map(([tipo, quantidade]) => ({
       tipo,
       quantidade,
     }))
+
+    console.log("[v0] Events by type data:", result)
+
+    return result
   }, [events])
 
   // Processar dados para tendência de confirmações
@@ -214,6 +233,16 @@ export default function AnalyticsPage() {
           </div>
           <BackButton />
         </div>
+
+        {events.length === 0 && (
+          <Card className="border-yellow-200 bg-yellow-50">
+            <CardContent className="pt-6">
+              <p className="text-yellow-800 text-center">
+                Nenhum evento encontrado. Adicione eventos para ver os insights aqui.
+              </p>
+            </CardContent>
+          </Card>
+        )}
 
         <Tabs defaultValue="overview" className="space-y-6">
           <TabsList className="grid w-full grid-cols-4 lg:w-[600px]">
