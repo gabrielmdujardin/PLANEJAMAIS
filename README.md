@@ -157,7 +157,7 @@ Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para ma
 
 ## 👥 Autores
 
-- **Equipe Planeja+** - [GitHub](https://github.com/planeja-plus)
+- **Equipe Planeja+** - Gabriel Mendes Dujardin
 
 ## 🙏 Agradecimentos
 
